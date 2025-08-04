@@ -1,9 +1,10 @@
 import lark_oapi as lark
-from lark_oapi.service.im.v1.request import GetMessageResourceRequest
-from lark_oapi.service.ocr.v1.model import RecognizeBasicImageRequestBody
-from lark_oapi.service.ocr.v1.request import RecognizeBasicImageRequest as OcrRecognizeBasicImageRequest
-from lark_oapi.service.bitable.v1.model import AppTableRecord
-from lark_oapi.service.bitable.v1.request import CreateAppTableRecordRequest
+# 注意：下面的 'service' 全部改为了 'api'
+from lark_oapi.api.im.v1.request import GetMessageResourceRequest
+from lark_oapi.api.ocr.v1.model import RecognizeBasicImageRequestBody
+from lark_oapi.api.ocr.v1.request import RecognizeBasicImageRequest as OcrRecognizeBasicImageRequest
+from lark_oapi.api.bitable.v1.model import AppTableRecord
+from lark_oapi.api.bitable.v1.request import CreateAppTableRecordRequest
 
 class FeishuClient:
     def __init__(self, app_id, app_secret, bitable_app_token, table_id):
