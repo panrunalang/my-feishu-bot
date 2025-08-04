@@ -1,19 +1,13 @@
 import lark_oapi as lark
-# 核心SDK的导入
+# 由于安装了 [all] 版本，这些路径现在都是有效的
 from lark_oapi.api.im.v1 import GetMessageResourceRequest, GetMessageResourceResponse
+from lark_oapi.api.ocr.v1 import RecognizeBasicImageRequest, RecognizeBasicImageRequestBody
 from lark_oapi.api.bitable.v1 import AppTableRecord, CreateAppTableRecordRequest
-# 导入独立的OCR SDK
-from lark_oapi.adapter.pysdk_ocr import OcrSdk
 
 class FeishuClient:
     def __init__(self, app_id, app_secret, bitable_app_token, table_id):
         self.bitable_app_token = bitable_app_token
         self.table_id = table_id
-        # 保存凭证，供两个SDK使用
-        self.app_id = app_id
-        self.app_secret = app_secret
-        
-        # 这个client用于处理“多维表格”和“消息”相关的API
         self.client = lark.Client.builder() \
             .app_id(app_id) \
             .app_secret(app_secret) \
@@ -38,27 +32,17 @@ class FeishuClient:
         return resp.file
 
     def do_ocr(self, image_bytes):
-        """对图片进行文字识别 (使用独立的 OCR SDK)"""
-        try:
-            # 每次调用时，实例化独立的OcrSdk客户端
-            ocr_client = OcrSdk(
-                app_id=self.app_id,
-                app_secret=self.app_secret,
-                domain=lark.DOMAIN_FEISHU # 指定使用飞书域名
-            )
-            # 直接调用 recognize 方法
-            resp = ocr_client.recognize(image_bytes)
+        """对图片进行文字识别"""
+        body = RecognizeBasicImageRequestBody.builder().image(image_bytes).build()
+        request = RecognizeBasicImageRequest.builder().request_body(body).build()
 
-            if resp.code != 0:
-                 print(f"OCR识别失败: Code {resp.code}, Msg {resp.msg}")
-                 return ""
-            
-            # 返回识别出的文本
-            return resp.data.text if resp.data and resp.data.text else ""
+        resp = self.client.ocr.v1.image.recognize_basic(request)
 
-        except Exception as e:
-            print(f"OCR SDK 调用时发生异常: {e}")
+        if resp is None or resp.code != 0:
+            print(f"OCR识别失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
             return ""
+        
+        return resp.data.text if resp.data and resp.data.text else ""
 
 
     def write_bitable(self, text):
