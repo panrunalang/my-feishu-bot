@@ -1,10 +1,8 @@
 import lark_oapi as lark
-# 注意：下面的 'service' 全部改为了 'api'
-from lark_oapi.api.im.v1.request import GetMessageResourceRequest
-from lark_oapi.api.ocr.v1.model import RecognizeBasicImageRequestBody
-from lark_oapi.api.ocr.v1.request import RecognizeBasicImageRequest as OcrRecognizeBasicImageRequest
-from lark_oapi.api.bitable.v1.model import AppTableRecord
-from lark_oapi.api.bitable.v1.request import CreateAppTableRecordRequest
+# 导入路径和类名都已根据 v1.4.20 版本更新
+from lark_oapi.api.im.v1 import GetMessageResourceRequest, GetMessageResourceResponse
+from lark_oapi.api.ocr.v1 import RecognizeBasicImageRequest, RecognizeBasicImageRequestBody
+from lark_oapi.api.bitable.v1 import AppTableRecord, CreateAppTableRecordRequest
 
 class FeishuClient:
     def __init__(self, app_id, app_secret, bitable_app_token, table_id):
@@ -17,29 +15,36 @@ class FeishuClient:
 
     def download_image(self, message_id):
         """根据消息ID下载图片"""
+        # 注意：类名从 GetMessageResourceRequest 变更为 GetMessageResourceRequest
+        # builder 的参数也变成了 path_params
         request = GetMessageResourceRequest.builder() \
-            .message_id(message_id) \
-            .file_key(message_id) \
-            .type("image") \
+            .path_params({
+                "message_id": message_id,
+                "file_key": message_id,
+                "type": "image"
+            }) \
             .build()
         
-        resp = self.client.im.v1.message_resource.get(request)
+        # 注意：调用方式微调
+        resp: GetMessageResourceResponse = self.client.im.v1.message_resource.get(request)
 
-        if not resp.success():
-            print(f"下载图片失败: Code {resp.code}, Msg {resp.msg}")
+        # success() 方法在新版中不存在，直接判断 resp 对象和 code
+        if resp is None or resp.code != 0:
+            print(f"下载图片失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
             return None
         
         return resp.file
 
     def do_ocr(self, image_bytes):
         """对图片进行文字识别"""
+        # 注意：类名变更
         body = RecognizeBasicImageRequestBody.builder().image(image_bytes).build()
-        request = OcrRecognizeBasicImageRequest.builder().request_body(body).build()
+        request = RecognizeBasicImageRequest.builder().request_body(body).build()
 
         resp = self.client.ocr.v1.image.recognize_basic(request)
 
-        if not resp.success():
-            print(f"OCR识别失败: Code {resp.code}, Msg {resp.msg}")
+        if resp is None or resp.code != 0:
+            print(f"OCR识别失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
             return ""
         
         return resp.data.text if resp.data and resp.data.text else ""
@@ -48,8 +53,10 @@ class FeishuClient:
     def write_bitable(self, text):
         """向多维表格写入一行记录"""
         fields = {"原始文本": text}
+        # 注意：AppTableRecord 的使用方式不变
         record = AppTableRecord.builder().fields(fields).build()
         
+        # 注意：类名变更
         request = CreateAppTableRecordRequest.builder() \
             .app_token(self.bitable_app_token) \
             .table_id(self.table_id) \
@@ -58,7 +65,7 @@ class FeishuClient:
 
         resp = self.client.bitable.v1.app_table_record.create(request)
         
-        if not resp.success():
-            print(f"写入表格失败: Code {resp.code}, Msg {resp.msg}")
+        if resp is None or resp.code != 0:
+            print(f"写入表格失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
         else:
             print(f"成功写入表格: '{text}'")
