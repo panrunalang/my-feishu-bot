@@ -1,13 +1,19 @@
 import lark_oapi as lark
-# 导入路径和类名都已根据 v1.4.20 版本更新
+# 核心SDK的导入
 from lark_oapi.api.im.v1 import GetMessageResourceRequest, GetMessageResourceResponse
-from lark_oapi.api.ocr.v1 import RecognizeBasicImageRequest, RecognizeBasicImageRequestBody
 from lark_oapi.api.bitable.v1 import AppTableRecord, CreateAppTableRecordRequest
+# 导入独立的OCR SDK
+from lark_oapi.adapter.pysdk_ocr import OcrSdk
 
 class FeishuClient:
     def __init__(self, app_id, app_secret, bitable_app_token, table_id):
         self.bitable_app_token = bitable_app_token
         self.table_id = table_id
+        # 保存凭证，供两个SDK使用
+        self.app_id = app_id
+        self.app_secret = app_secret
+        
+        # 这个client用于处理“多维表格”和“消息”相关的API
         self.client = lark.Client.builder() \
             .app_id(app_id) \
             .app_secret(app_secret) \
@@ -15,8 +21,6 @@ class FeishuClient:
 
     def download_image(self, message_id):
         """根据消息ID下载图片"""
-        # 注意：类名从 GetMessageResourceRequest 变更为 GetMessageResourceRequest
-        # builder 的参数也变成了 path_params
         request = GetMessageResourceRequest.builder() \
             .path_params({
                 "message_id": message_id,
@@ -25,10 +29,8 @@ class FeishuClient:
             }) \
             .build()
         
-        # 注意：调用方式微调
         resp: GetMessageResourceResponse = self.client.im.v1.message_resource.get(request)
 
-        # success() 方法在新版中不存在，直接判断 resp 对象和 code
         if resp is None or resp.code != 0:
             print(f"下载图片失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
             return None
@@ -36,27 +38,34 @@ class FeishuClient:
         return resp.file
 
     def do_ocr(self, image_bytes):
-        """对图片进行文字识别"""
-        # 注意：类名变更
-        body = RecognizeBasicImageRequestBody.builder().image(image_bytes).build()
-        request = RecognizeBasicImageRequest.builder().request_body(body).build()
+        """对图片进行文字识别 (使用独立的 OCR SDK)"""
+        try:
+            # 每次调用时，实例化独立的OcrSdk客户端
+            ocr_client = OcrSdk(
+                app_id=self.app_id,
+                app_secret=self.app_secret,
+                domain=lark.DOMAIN_FEISHU # 指定使用飞书域名
+            )
+            # 直接调用 recognize 方法
+            resp = ocr_client.recognize(image_bytes)
 
-        resp = self.client.ocr.v1.image.recognize_basic(request)
+            if resp.code != 0:
+                 print(f"OCR识别失败: Code {resp.code}, Msg {resp.msg}")
+                 return ""
+            
+            # 返回识别出的文本
+            return resp.data.text if resp.data and resp.data.text else ""
 
-        if resp is None or resp.code != 0:
-            print(f"OCR识别失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
+        except Exception as e:
+            print(f"OCR SDK 调用时发生异常: {e}")
             return ""
-        
-        return resp.data.text if resp.data and resp.data.text else ""
 
 
     def write_bitable(self, text):
         """向多维表格写入一行记录"""
         fields = {"原始文本": text}
-        # 注意：AppTableRecord 的使用方式不变
         record = AppTableRecord.builder().fields(fields).build()
         
-        # 注意：类名变更
         request = CreateAppTableRecordRequest.builder() \
             .app_token(self.bitable_app_token) \
             .table_id(self.table_id) \
