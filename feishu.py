@@ -1,9 +1,9 @@
-import os
-import requests
 import lark_oapi as lark
-from lark_oapi.api.im.v1 import GetMessageResourceRequest
-from lark_oapi.api.ocr.v1 import RecognizeBasicImageRequest
-from lark_oapi.api.bitable.v1 import CreateAppTableRecordRequest, AppTableRecord
+from lark_oapi.service.im.v1.request import GetMessageResourceRequest
+from lark_oapi.service.ocr.v1.model import RecognizeBasicImageRequestBody
+from lark_oapi.service.ocr.v1.request import RecognizeBasicImageRequest as OcrRecognizeBasicImageRequest
+from lark_oapi.service.bitable.v1.model import AppTableRecord
+from lark_oapi.service.bitable.v1.request import CreateAppTableRecordRequest
 
 class FeishuClient:
     def __init__(self, app_id, app_secret, bitable_app_token, table_id):
@@ -32,11 +32,8 @@ class FeishuClient:
 
     def do_ocr(self, image_bytes):
         """对图片进行文字识别"""
-        request = RecognizeBasicImageRequest.builder() \
-            .request_body(lark.RecognizeBasicImageRequestBody.builder()
-                          .image(image_bytes)
-                          .build()) \
-            .build()
+        body = RecognizeBasicImageRequestBody.builder().image(image_bytes).build()
+        request = OcrRecognizeBasicImageRequest.builder().request_body(body).build()
 
         resp = self.client.ocr.v1.image.recognize_basic(request)
 
@@ -44,12 +41,14 @@ class FeishuClient:
             print(f"OCR识别失败: Code {resp.code}, Msg {resp.msg}")
             return ""
         
-        return resp.data.text
+        return resp.data.text if resp.data and resp.data.text else ""
+
 
     def write_bitable(self, text):
         """向多维表格写入一行记录"""
-        fields = {"原始文本": text}  # 请确保您的表格里有一列的列名就叫“原始文本”
+        fields = {"原始文本": text}
         record = AppTableRecord.builder().fields(fields).build()
+        
         request = CreateAppTableRecordRequest.builder() \
             .app_token(self.bitable_app_token) \
             .table_id(self.table_id) \
@@ -61,4 +60,4 @@ class FeishuClient:
         if not resp.success():
             print(f"写入表格失败: Code {resp.code}, Msg {resp.msg}")
         else:
-            print(f"成功写入表格: {text}")
+            print(f"成功写入表格: '{text}'")
