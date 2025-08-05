@@ -2,6 +2,7 @@
 
 import os
 import json
+import threading # 引入线程模块
 from flask import Flask, request, jsonify
 from feishu import FeishuClient
 
@@ -21,6 +22,19 @@ if not all([APP_ID, APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID]):
 # 初始化飞书客户端
 client = FeishuClient(APP_ID, APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID)
 
+def process_message(chat_id, record_text):
+    """
+    在后台线程中处理耗时操作
+    """
+    print(f"后台开始处理: {record_text}")
+    # 检查写入是否成功
+    if client.write_bitable(record_text):
+        # 如果成功，并且我们拿到了 chat_id，就发送回复
+        if chat_id:
+            # 使用 f-string 来格式化回复内容
+            reply_content = f"✅ 记账成功: {record_text}"
+            client.send_reply(chat_id, reply_content)
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
@@ -34,37 +48,27 @@ def webhook():
         # 2. 处理事件回调
         event = data.get("event")
         if not event:
-            print("收到的请求不是一个有效的事件。")
             return jsonify({"code": 1, "msg": "Invalid event"})
 
         message = event.get("message", {})
         msg_type = message.get("message_type")
-        # 新增：获取 chat_id
         chat_id = message.get("chat_id")
         
-        # --- 核心逻辑：只处理文本消息 ---
         if msg_type == "text":
             content_str = message.get("content", "{}")
             content = json.loads(content_str)
             record_text = content.get("text", "")
             
-            print(f"解析到文本内容: {record_text}")
-
             if record_text:
-                # 检查写入是否成功
-                if client.write_bitable(record_text):
-                    # 如果成功，并且我们拿到了 chat_id，就发送回复
-                    if chat_id:
-                        client.send_reply(chat_id, "✅ 记账成功")
-            else:
-                print("文本内容为空，已忽略。")
-        else:
-            print(f"收到非文本消息 (类型: {msg_type})，已忽略，不作处理。")
+                print(f"收到文本消息，准备后台处理: {record_text}")
+                # 创建并启动一个新线程来处理消息，主线程可以立刻返回
+                thread = threading.Thread(target=process_message, args=(chat_id, record_text))
+                thread.start()
 
     except Exception as e:
         print(f"发生未知错误: {e}")
 
-    # 始终向飞书返回成功响应
+    # 无论如何，都立刻向飞书返回成功响应，防止重试
     return jsonify({"code": 0})
 
 # 这个部分仅用于本地测试
