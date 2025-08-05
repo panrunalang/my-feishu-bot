@@ -1,4 +1,4 @@
-# feishu.py (完整最终版 - 硬编码密钥测试版)
+# feishu.py
 
 import lark_oapi as lark
 import json
@@ -6,12 +6,12 @@ import os
 import base64
 from openai import OpenAI
 
-# 导入所有需要的飞书SDK模块
 from lark_oapi.api.bitable.v1 import AppTableRecord, CreateAppTableRecordRequest
 from lark_oapi.api.im.v1 import CreateMessageRequest, CreateMessageRequestBody, GetMessageResourceRequest
 
 class FeishuClient:
-    def __init__(self, app_id, app_secret, bitable_app_token, table_id):
+    # 确保这里的 __init__ 方法包含了 5 个参数（除了 self）
+    def __init__(self, app_id, app_secret, bitable_app_token, table_id, openrouter_api_key):
         self.bitable_app_token = bitable_app_token
         self.table_id = table_id
         # 飞书客户端
@@ -20,18 +20,12 @@ class FeishuClient:
             .app_secret(app_secret) \
             .build()
         
-        # --- 警告：密钥已硬编码 ---
-        # 为了临时测试，将API密钥直接写在这里。
-        # 这种做法有严重的安全风险，请勿在生产环境或公开代码库中使用。
-        # 测试完成后，请务必改回使用环境变量的方式。
-        HARDCODED_API_KEY = "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"
-
-        # OpenRouter客户端
+        # OpenRouter客户端，使用传入的 openrouter_api_key
         self.openrouter_client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
-            api_key=HARDCODED_API_KEY,  # 使用硬编码的密钥
-            # api_key=os.getenv("OPENROUTER_API_KEY"), # 这是正确且安全的方式
+            api_key=openrouter_api_key,
         )
+
 
     def write_bitable(self, text):
         """向多维表格写入一行记录，并返回是否成功"""
