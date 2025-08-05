@@ -1,9 +1,12 @@
+# requirements.txt
+
 # Web 服务框架
 flask==3.0.3
 gunicorn==22.0.0
 
-# OpenAI 库 (用于调用 OpenRouter)
-openai
+# 移除 openai，添加 google-cloud-aiplatform
+# google-cloud-aiplatform 会自动安装它需要的所有子依赖
+google-cloud-aiplatform
 
-# 飞书 v2 版本 SDK (从 PyPI 安装，这将自动处理所有子依赖)
+# 飞书 v2 版本 SDK
 lark-oapi
