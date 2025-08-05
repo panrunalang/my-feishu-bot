@@ -2,12 +2,13 @@
 
 这是一个部署在 [Render](https://render.com/) 上的飞书机器人，它能帮你轻松记账。你只需要向机器人发送文本消息或账单截图，它就能自动识别关键信息，并将结构化的数据存入飞书多维表格 (Bitable) 中。
 
-告别手动输入，让 AI 成为你的私人记账助理！
-
 ## ✨ Demo
 
 记账机器人会自动将聊天内容和图片票据解析并存入你指定的飞书多维表格中，最终效果如下：
-\*\*
+<img width="772" height="277" alt="image" src="https://github.com/user-attachments/assets/a4c3d93b-f35c-4114-b7a1-5cf5f1398799" />
+<img width="1125" height="2436" alt="image" src="https://github.com/user-attachments/assets/6bc28631-5ea4-46dd-9d0c-c1434aa5388e" />
+
+
 
 ## 🚀 主要功能
 
