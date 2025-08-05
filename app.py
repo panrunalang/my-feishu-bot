@@ -1,5 +1,3 @@
-# app.py (完整最终版)
-
 import os
 import json
 import threading
@@ -12,10 +10,15 @@ APP_ID = os.getenv("APP_ID")
 APP_SECRET = os.getenv("APP_SECRET")
 BITABLE_APP_TOKEN = os.getenv("BITABLE_APP_TOKEN")
 TABLE_ID = os.getenv("TABLE_ID")
+# 新增：从环境变量中读取 OpenRouter API Key
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-if not all([APP_ID, APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID]):
-    raise ValueError("错误：一个或多个环境变量没有设置。")
-client = FeishuClient(APP_ID, APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID)
+# 完善环境变量检查，确保 OPENROUTER_API_KEY 也被设置了
+if not all([APP_ID, APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, OPENROUTER_API_KEY]):
+    raise ValueError("错误：一个或多个环境变量没有设置。请检查 APP_ID, APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, OPENROUTER_API_KEY。")
+
+# 在创建 FeishuClient 实例时，将 API Key 传递进去
+client = FeishuClient(APP_ID, APP_SECRET, BITABLE_APP_TOKEN, TABLE_ID, OPENROUTER_API_KEY)
 
 
 def process_text_message(chat_id, record_text):
