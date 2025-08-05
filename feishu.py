@@ -1,4 +1,4 @@
-# feishu.py (完整最终版 - 第二次修订)
+# feishu.py (完整最终版 - 硬编码密钥测试版)
 
 import lark_oapi as lark
 import json
@@ -19,10 +19,18 @@ class FeishuClient:
             .app_id(app_id) \
             .app_secret(app_secret) \
             .build()
+        
+        # --- 警告：密钥已硬编码 ---
+        # 为了临时测试，将API密钥直接写在这里。
+        # 这种做法有严重的安全风险，请勿在生产环境或公开代码库中使用。
+        # 测试完成后，请务必改回使用环境变量的方式。
+        HARDCODED_API_KEY = "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"
+
         # OpenRouter客户端
         self.openrouter_client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("OPENROUTER_API_KEY"),
+            api_key=HARDCODED_API_KEY,  # 使用硬编码的密钥
+            # api_key=os.getenv("OPENROUTER_API_KEY"), # 这是正确且安全的方式
         )
 
     def write_bitable(self, text):
@@ -91,12 +99,10 @@ class FeishuClient:
     def get_image_description(self, image_bytes):
         """调用OpenRouter获取图片描述"""
         print("正在调用OpenRouter API...")
-        # *** 这是本次修改的地方 ***
-        # image_bytes 是一个文件流对象(_io.BytesIO)，需要用 .read() 来获取其中的原始数据(bytes)
         base64_image = base64.b64encode(image_bytes.read()).decode('utf-8')
         try:
             response = self.openrouter_client.chat.completions.create(
-                model="google/gemini-2.0-flash-exp:free",
+                model="google/gemini-pro-vision", # 已更换为更稳定的模型进行测试
                 messages=[
                     {
                         "role": "user",
@@ -107,7 +113,7 @@ class FeishuClient:
                             },
                             {
                                 "type": "image_url", 
-                                "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
+                                "image_url": {"url": f"data:image/png;base64,{base64_image}"} # 假设图片是png
                             }
                         ]
                     }
