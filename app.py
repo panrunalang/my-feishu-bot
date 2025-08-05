@@ -1,3 +1,5 @@
+# app.py
+
 import os
 import json
 from flask import Flask, request, jsonify
@@ -37,6 +39,8 @@ def webhook():
 
         message = event.get("message", {})
         msg_type = message.get("message_type")
+        # 新增：获取 chat_id
+        chat_id = message.get("chat_id")
         
         # --- 核心逻辑：只处理文本消息 ---
         if msg_type == "text":
@@ -47,19 +51,22 @@ def webhook():
             print(f"解析到文本内容: {record_text}")
 
             if record_text:
-                client.write_bitable(record_text)
+                # 检查写入是否成功
+                if client.write_bitable(record_text):
+                    # 如果成功，并且我们拿到了 chat_id，就发送回复
+                    if chat_id:
+                        client.send_reply(chat_id, "✅ 记账成功")
             else:
                 print("文本内容为空，已忽略。")
         else:
-            # 对于任何非文本消息 (如图片、文件等)，只打印日志并礼貌地忽略
             print(f"收到非文本消息 (类型: {msg_type})，已忽略，不作处理。")
 
     except Exception as e:
         print(f"发生未知错误: {e}")
 
-    # 始终向飞书返回成功响应，防止不必要的重试
+    # 始终向飞书返回成功响应
     return jsonify({"code": 0})
 
-# 这个部分仅用于本地测试，在Render上会使用gunicorn启动
+# 这个部分仅用于本地测试
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
