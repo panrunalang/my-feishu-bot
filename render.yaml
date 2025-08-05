@@ -1,0 +1,30 @@
+# render.yaml
+services:
+  - type: web
+    name: my-feishu-bot # 你可以自定义服务名称
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: APP_ID
+        sync: false # 飞书 App ID
+      - key: APP_SECRET
+        sync: false # 飞书 App Secret
+      - key: BITABLE_APP_TOKEN
+        sync: false # 飞书多维表格 App Token
+      - key: TABLE_ID
+        sync: false # 飞书多维表格 Table ID
+      - key: GCP_PROJECT_ID
+        sync: false # 你的 Google Cloud 项目 ID
+      - key: GCP_REGION
+        value: us-central1 # 或者你选择的其他区域
+      - key: PYTHON_VERSION
+        value: 3.11 # 建议指定Python版本
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: /etc/secrets/google_credentials.json # 指向我们的机密文件
+
+    # 定义一个机密文件，用于存放GCP服务账号的JSON密钥
+    secretFiles:
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        name: google_credentials.json
+        mountPath: /etc/secrets/google_credentials.json
