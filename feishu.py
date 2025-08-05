@@ -102,7 +102,7 @@ class FeishuClient:
         base64_image = base64.b64encode(image_bytes.read()).decode('utf-8')
         try:
             response = self.openrouter_client.chat.completions.create(
-                model="google/gemini-pro-vision", # 已更换为更稳定的模型进行测试
+                model="google/gemini-2.0-flash-exp:free",
                 messages=[
                     {
                         "role": "user",
