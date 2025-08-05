@@ -1,4 +1,4 @@
-# feishu.py (完整且正确的最终版)
+# feishu.py (最终版)
 
 import lark_oapi as lark
 import json
@@ -68,16 +68,14 @@ class FeishuClient:
 
             if resp is None or resp.code != 0:
                 print(f"发送回复失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
-            else:
-                print(f"成功向 Chat ID {chat_id} 发送回复。")
         except Exception as e:
             print(f"调用 send_reply 时发生异常: {e}")
     
-    def download_image(self, message_id, image_key):
-        """根据消息ID和文件Key下载图片"""
+    def download_image(self, message_id):
+        """根据消息ID下载图片"""
         request = GetMessageResourceRequest.builder() \
             .message_id(message_id) \
-            .file_key(image_key) \
+            .file_key(message_id) \
             .type("image") \
             .build()
         
@@ -87,7 +85,6 @@ class FeishuClient:
             print(f"下载图片失败: Code {getattr(resp, 'code', 'N/A')}, Msg {getattr(resp, 'msg', 'Unknown error')}")
             return None
         
-        print("图片下载成功。")
         return resp.file
 
     def get_image_description(self, image_bytes):
@@ -96,6 +93,7 @@ class FeishuClient:
         base64_image = base64.b64encode(image_bytes).decode('utf-8')
         try:
             response = self.openrouter_client.chat.completions.create(
+                # 使用你指定的模型
                 model="google/gemini-2.0-flash-exp:free",
                 messages=[
                     {
@@ -103,6 +101,7 @@ class FeishuClient:
                         "content": [
                             {
                                 "type": "text", 
+                                # 使用你优化后的Prompt
                                 "text": "请详细描述这张图片里的内容，用于记账。如果包含收据或发票，请提取关键信息：总金额、日期、项目名称，生成简短描述。要求：1. 除了信息之外，不要添加任何额外的文字或者符号包括：`，`,`。`,`.`，`*`等；2. 只用一句简短的中文描述即可，比如`10月1日购买办公用品花费10刀`、`中午吃饭花了15人民币`，**不能超过20字**；3. 注意货币的种类，比如美元(刀，美元，$，bucks)、人民币(元，人民币，¥，块钱)等。"
                             },
                             {
