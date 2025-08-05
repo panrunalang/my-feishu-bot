@@ -1,4 +1,4 @@
-# feishu.py (完整最终版)
+# feishu.py (完整最终版 - 第二次修订)
 
 import lark_oapi as lark
 import json
@@ -91,7 +91,9 @@ class FeishuClient:
     def get_image_description(self, image_bytes):
         """调用OpenRouter获取图片描述"""
         print("正在调用OpenRouter API...")
-        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        # *** 这是本次修改的地方 ***
+        # image_bytes 是一个文件流对象(_io.BytesIO)，需要用 .read() 来获取其中的原始数据(bytes)
+        base64_image = base64.b64encode(image_bytes.read()).decode('utf-8')
         try:
             response = self.openrouter_client.chat.completions.create(
                 model="google/gemini-2.0-flash-exp:free",
