@@ -5,8 +5,5 @@ gunicorn==22.0.0
 # OpenAI 库 (用于调用 OpenRouter)
 openai
 
-# 飞书 SDK 的前置依赖
-requests
-
-# 飞书 v2 版本 SDK (直接从 GitHub 安装)
-git+https://github.com/larksuite/oapi-sdk-python.git
+# 飞书 v2 版本 SDK (从 PyPI 安装，这将自动处理所有子依赖)
+lark-oapi
