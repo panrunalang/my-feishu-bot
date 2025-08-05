@@ -1,9 +1,3 @@
-当然，一个好的 README 是吸引贡献者和用户的第一步。根据我们整个调试过程和你项目的功能，我为你精心准备了一份 README 文件。
-
-你只需要将下面的所有内容复制到一个名为 `README.md` 的文件里，然后把它放到你的 GitHub 项目根目录即可。
-
------
-
 # 飞书 AI 记账机器人 (Feishu AI Bookkeeping Bot)
 
 这是一个部署在 [Render](https://render.com/) 上的飞书机器人，它能帮你轻松记账。你只需要向机器人发送文本消息或账单截图，它就能自动识别关键信息，并将结构化的数据存入飞书多维表格 (Bitable) 中。
@@ -27,8 +21,6 @@
 
 ## 🛠️ 工作流程
 
-```mermaid
-graph TD
     A[用户在飞书中发送消息] --> B{飞书机器人};
     B -->|Webhook| C[Render服务器 (Flask App)];
     subgraph C [Render服务器 (Flask App)]
@@ -43,7 +35,6 @@ graph TD
     C4 --> E;
     E --> F[发送回复消息至飞书];
     F --> B;
-```
 
 ## 部署指南
 
